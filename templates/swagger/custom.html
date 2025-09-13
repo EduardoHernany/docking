@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>BioPharmaX API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #ffffff;
+      --bg-secondary: #f8fafc;
+      --sidebar-bg: #ffffff;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --border: #e2e8f0;
+      --hover: #f1f5f9;
+      --active: #dbeafe;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --sidebar-width: 280px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --bg-secondary: #1e293b;
+      --sidebar-bg: #1e293b;
+      --text: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --border: #334155;
+      --hover: #334155;
+      --active: #1e40af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+
+    .sidebar.collapsed { transform: translateX(-100%); }
+
+    .content.full-width { margin-left: 0; width: 100%; }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 1.1rem;
+    }
+
+    .btn:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .nav-list {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    .nav-link.active {
+      background: var(--active);
+      color: var(--primary);
+    }
+
+    .endpoint-count {
+      background: var(--border);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .nav-link.active .endpoint-count {
+      background: var(--primary);
+      color: white;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg-secondary);
+      margin-left: var(--sidebar-width);
+      width: calc(100% - var(--sidebar-width));
+      transition: all 0.3s ease;
+    }
+
+    .content.full-width {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .content-inner {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .download-link {
+      text-align: right;
+      margin-bottom: 16px;
+    }
+
+    .download-link a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .download-link a:hover {
+      background: var(--hover);
+    }
+
+    #swagger-ui {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .loading, .error-state, .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .sidebar-toggle {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 1.1rem;
+      display: none;
+    }
+
+    .sidebar.collapsed + .content .sidebar-toggle {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar-toggle { display: block !important; }
+      .content { 
+        width: 100% !important; 
+        margin-left: 0 !important;
+      }
+      .content-inner { padding: 60px 16px 16px; }
+    }
+
+    .topbar { display: none !important; }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">BioPharmaX API</div>
+      <div class="controls">
+        <button class="btn" id="theme-toggle" title="Alternar tema">🌓</button>
+        <button class="btn" id="close-sidebar" title="Fechar">×</button>
+      </div>
+    </div>
+    
+    <div class="sidebar-content">
+      <input type="text" class="search-input" id="tag-search" placeholder="Buscar endpoints..." />
+      <ul class="nav-list" id="tag-list">
+        <li class="loading">
+          <div class="loading-spinner"></div>
+          <span>Carregando...</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <button class="sidebar-toggle" id="sidebar-toggle-content">☰</button>
+    <div class="content-inner">
+      <div class="download-link">
+        <a href="{{ schema_url }}?format=json" download="openapi.json">
+          📥 Download OpenAPI JSON
+        </a>
+      </div>
+      <div id="swagger-ui"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  
+  <script>
+    class SwaggerManager {
+      constructor() {
+        this.sidebar = document.getElementById('sidebar');
+        this.content = document.getElementById('content');
+        this.tagList = document.getElementById('tag-list');
+        this.tagSearch = document.getElementById('tag-search');
+        this.init();
+      }
+
+      init() {
+        // Event listeners
+        document.getElementById('sidebar-toggle')?.addEventListener('click', () => this.openSidebar());
+        document.getElementById('sidebar-toggle-content')?.addEventListener('click', () => this.openSidebar());
+        document.getElementById('close-sidebar')?.addEventListener('click', () => this.closeSidebar());
+        document.getElementById('theme-toggle')?.addEventListener('click', () => this.toggleTheme());
+        this.tagSearch?.addEventListener('input', (e) => this.filterTags(e.target.value));
+
+        // Load theme
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        this.initSwagger();
+      }
+
+      toggleSidebar() {
+        this.sidebar?.classList.contains('collapsed') ? this.openSidebar() : this.closeSidebar();
+      }
+
+      openSidebar() {
+        this.sidebar?.classList.remove('collapsed');
+        this.content?.classList.remove('full-width');
+      }
+
+      closeSidebar() {
+        this.sidebar?.classList.add('collapsed');
+        this.content?.classList.add('full-width');
+      }
+
+      toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      }
+
+      async initSwagger() {
+        try {
+          SwaggerUIBundle({
+            url: "{{ schema_url }}?format=json",
+            dom_id: "#swagger-ui",
+            layout: "BaseLayout",
+            deepLinking: true,
+            docExpansion: "list",
+            defaultModelsExpandDepth: -1,
+            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset]
+          });
+
+          await this.loadTags();
+          this.setupScrollObserver();
+        } catch (error) {
+          this.showError('Erro ao carregar documentação');
+        }
+      }
+
+      async loadTags() {
+        try {
+          const response = await fetch("{{ schema_url }}?format=json");
+          const data = await response.json();
+          
+          const tagCounts = {};
+          Object.values(data.paths || {}).forEach(pathMethods => {
+            Object.values(pathMethods).forEach(operation => {
+              if (operation.tags) {
+                operation.tags.forEach(tag => {
+                  tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+              }
+            });
+          });
+
+          const tags = Object.keys(tagCounts).sort();
+          this.renderTags(tags, tagCounts);
+        } catch (error) {
+          this.showError('Erro ao carregar tags');
+        }
+      }
+
+      renderTags(tags, counts) {
+        if (tags.length === 0) {
+          this.tagList.innerHTML = '<li class="empty-state"><span>Nenhum endpoint encontrado</span></li>';
+          return;
+        }
+
+        const html = tags.map(tag => `
+          <li class="nav-item">
+            <a class="nav-link" href="#${tag}" data-tag="${tag}">
+              <span>${tag}</span>
+              <span class="endpoint-count">${counts[tag] || 0}</span>
+            </a>
+          </li>
+        `).join('');
+
+        this.tagList.innerHTML = html;
+
+        // Add click handlers
+        this.tagList.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tag = e.currentTarget.getAttribute('data-tag');
+            this.scrollToTag(tag);
+            this.setActiveTag(tag);
+            if (window.innerWidth <= 768) this.closeSidebar();
+          });
+        });
+      }
+
+      filterTags(query) {
+        const items = this.tagList.querySelectorAll('.nav-item');
+        const normalizedQuery = query.toLowerCase();
+        
+        items.forEach(item => {
+          const link = item.querySelector('.nav-link');
+          const tag = link?.getAttribute('data-tag')?.toLowerCase() || '';
+          item.style.display = tag.includes(normalizedQuery) ? '' : 'none';
+        });
+      }
+
+      scrollToTag(tag) {
+        const element = document.getElementById(`operations-tag-${tag}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      setActiveTag(tag) {
+        this.tagList.querySelectorAll('.nav-link').forEach(link => {
+          link.classList.remove('active');
+        });
+        const activeLink = this.tagList.querySelector(`[data-tag="${tag}"]`);
+        if (activeLink) activeLink.classList.add('active');
+      }
+
+      setupScrollObserver() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const tag = entry.target.id.replace('operations-tag-', '');
+              this.setActiveTag(tag);
+            }
+          });
+        }, { threshold: 0.3 });
+
+        setTimeout(() => {
+          document.querySelectorAll('[id^="operations-tag-"]').forEach(el => {
+            observer.observe(el);
+          });
+        }, 1000);
+      }
+
+      showError(message) {
+        this.tagList.innerHTML = `
+          <li class="error-state">
+            <span>⚠️</span>
+            <span>${message}</span>
+          </li>
+        `;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      new SwaggerManager();
+    });
+  </script>
+</body>
+</html>

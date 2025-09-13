@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:15
+    container_name: docking_db
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: docking_pgadmin
+    env_file:
+      - .env
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  web:
+    build: .
+    container_name: docking_web
+    user: "${APP_UID}:${APP_GID}"
+    env_file:
+      - .env
+    command: bash /app/entrypoint.sh
+    volumes:
+      - .:/app
+      - molecules_data:/app/files/molecules      # <— compartilhado
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: docking_worker
+    user: "${APP_UID}:${APP_GID}"
+    env_file:
+      - .env
+    volumes:
+      - molecules_data:/app/files/molecules      # <— mesmo volume do web
+      - ./worker:/app                      # hot-reload do código do worker
+    # GPUs (Compose v2+)
+    gpus: all
+    # se sua versão de compose não suportar 'gpus: all', use:
+    # runtime: nvidia
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  molecules_data:

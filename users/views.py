@@ -1,0 +1,43 @@
+# users/views.py
+from django.contrib.auth import get_user_model
+from rest_framework import viewsets, permissions, filters
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+
+from .serializers import UserSerializer
+
+User = get_user_model()
+
+
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """
+    GET liberado p/ autenticados; POST/PUT/PATCH/DELETE só admin.
+    Ajuste conforme sua política.
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_staff
+
+
+@extend_schema(
+    tags=["Users"],
+    parameters=[
+        OpenApiParameter("search", OpenApiTypes.STR, OpenApiParameter.QUERY,
+                         description="Busca por username, email, first_name, last_name"),
+        OpenApiParameter("ordering", OpenApiTypes.STR, OpenApiParameter.QUERY,
+                         description="Ordenação, ex: username ou -date_joined"),
+    ],
+)
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    CRUD de usuários. 
+    - List/Retrieve: autenticado
+    - Create/Update/Delete: admin (por padrão, via IsAdminOrReadOnly)
+    """
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["username", "email", "first_name", "last_name"]
+    ordering_fields = ["username", "date_joined", "last_login"]
