@@ -25,6 +25,10 @@ load_dotenv(BASE_DIR / ".env")
 MOLECULES_BASE_DIR = BASE_DIR / "files" /"molecules"
 os.makedirs(MOLECULES_BASE_DIR, exist_ok=True)
 
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "rpc://")
+CELERY_TASK_DEFAULT_QUEUE = "default"
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
 
@@ -53,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    "django_celery_results",
     "rest_framework",
     "drf_spectacular",
     # my apps

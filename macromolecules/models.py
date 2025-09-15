@@ -1,4 +1,3 @@
-# macromolecules/models.py
 import uuid
 from django.db import models
 
@@ -11,6 +10,7 @@ class MacromoleculeType(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)   # ex.: 'falciparum'
     description = models.TextField(null=True, blank=True)
+    redocking = models.BooleanField(default=True)          # ← MOVIDO PARA CÁ
     active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -37,13 +37,13 @@ class Macromolecule(models.Model):
         related_name="macromolecules",
     )
 
-    redocking = models.BooleanField(default=True)
+    # redocking REMOVIDO DAQUI
     gridsize = models.CharField(max_length=255, null=True, blank=True)
     gridcenter = models.CharField(max_length=255, null=True, blank=True)
     ligante_original = models.CharField(max_length=255, null=True, blank=True)
     rmsd_redocking = models.CharField(max_length=255, null=True, blank=True)
     energia_original = models.CharField(max_length=255, null=True, blank=True)
-    pathFilefld = models.CharField(max_length=1024, null=True, blank=True)  # mantém o nome original
+    pathFilefld = models.CharField(max_length=1024, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

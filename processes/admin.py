@@ -5,8 +5,8 @@ from .models import Process
 
 @admin.register(Process)
 class ProcessAdmin(admin.ModelAdmin):
-    list_display = ("nome", "type", "user", "status", "redocking", "created_at")
-    list_filter = ("status", "type", "redocking")
+    list_display = ("nome", "type", "user", "status", "created_at")
+    list_filter = ("status", "type")
     search_fields = ("nome", "user__username", "user__email", "type__name")
     ordering = ("-created_at",)
     autocomplete_fields = ("type", "user")
@@ -14,7 +14,7 @@ class ProcessAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            "fields": ("nome", "type", "user", "redocking", "status")
+            "fields": ("nome", "type", "user", "status")
         }),
         ("Resultado", {
             "fields": ("resultado_final", "pathFileSDF"),

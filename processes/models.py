@@ -1,4 +1,3 @@
-# processes/models.py
 import uuid
 from django.db import models
 from users.models import User
@@ -19,14 +18,12 @@ class Process(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nome = models.CharField(max_length=255)
 
-    # mantém a semântica do original: referencia o tipo e o usuário
+    # referencia o tipo (que agora contém redocking) e o usuário
     type = models.ForeignKey(
         MacromoleculeType,
         on_delete=models.PROTECT,
         related_name="processes",
     )
-
-    redocking = models.BooleanField(default=True)
 
     status = models.CharField(
         max_length=20,
@@ -37,6 +34,9 @@ class Process(models.Model):
     resultado_final = models.JSONField(null=True, blank=True)  # JSONB
     pathFileSDF = models.CharField(max_length=1024, null=True, blank=True)
 
+    # ⬇⬇⬇ NOVO: caminho absoluto do .zip gerado
+    pathFileZIP = models.CharField(max_length=1024, null=True, blank=True)
+    
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

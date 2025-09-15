@@ -29,47 +29,60 @@ services:
         condition: service_healthy
     restart: always
 
+  rabbitmq:
+      image: rabbitmq:3-management
+      container_name: docking_rabbitmq
+      environment:
+        - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+        - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      ports:
+        - "5672:5672"
+        - "15672:15672"   
+      restart: always
+
   web:
     build: .
     container_name: docking_web
-    user: "${APP_UID}:${APP_GID}"
     env_file:
       - .env
     command: bash /app/entrypoint.sh
     volumes:
       - .:/app
-      - molecules_data:/app/files/molecules      # <— compartilhado
+      - molecules_data:/app/files/molecules
+      - processes_data:/app/files/processes 
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
     restart: always
 
-  worker:
+  celery_worker:
     build:
       context: .
       dockerfile: worker/Dockerfile
-    container_name: docking_worker
-    user: "${APP_UID}:${APP_GID}"
+    container_name: docking_celery_worker
     env_file:
       - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=djangoAPI.settings
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    command: bash worker/entrypoint.sh
     volumes:
-      - molecules_data:/app/files/molecules      # <— mesmo volume do web
-      - ./worker:/app                      # hot-reload do código do worker
-    # GPUs (Compose v2+)
+      - .:/app
+      - molecules_data:/app/files/molecules
+      - processes_data:/app/files/processes 
     gpus: all
-    # se sua versão de compose não suportar 'gpus: all', use:
-    # runtime: nvidia
-    # environment:
-    #   - NVIDIA_VISIBLE_DEVICES=all
-    #   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     depends_on:
-      db:
-        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     restart: always
 
 volumes:
   postgres_data:
   pgadmin_data:
   molecules_data:
+  processes_data:     

@@ -15,11 +15,11 @@ class MacromoleculeTypeAdmin(admin.ModelAdmin):
 @admin.register(Macromolecule)
 class MacromoleculeAdmin(admin.ModelAdmin):
     list_display = (
-        "nome", "type", "redocking",
+        "nome", "type",
         "rmsd_redocking", "energia_original",
         "created_at",
     )
-    list_filter = ("type", "redocking")
+    list_filter = ["type"]
     search_fields = ("nome", "rec", "ligante_original")
     ordering = ("-created_at",)
     autocomplete_fields = ("type",)
@@ -27,7 +27,7 @@ class MacromoleculeAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            "fields": ("nome", "rec", "type", "redocking")
+            "fields": ("nome", "rec", "type", )
         }),
         ("Configuração de Grid", {
             "fields": ("gridsize", "gridcenter"),

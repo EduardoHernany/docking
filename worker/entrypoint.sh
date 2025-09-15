@@ -1,19 +1,41 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-echo "[worker] iniciando..."
+echo "[worker] starting..."
+umask 0002
 
-# opcional: aguardar volume / checar GPU
+APP_UID="${APP_UID:-1000}"
+APP_GID="${APP_GID:-1000}"
+MOLECULES_DIR="${MOLECULES_DIR:-/app/files/molecules}"
+
+# corrige proprietário e permissões do volume (idempotente)
+mkdir -p "$MOLECULES_DIR"
+chown -R "${APP_UID}:${APP_GID}" "$MOLECULES_DIR" || true
+chmod -R ug+rwX "$MOLECULES_DIR" || true
+find "$MOLECULES_DIR" -type d -exec chmod 2775 {} + || true
+ls -la "$MOLECULES_DIR" || true
+
+# GPU (opcional)
 if command -v nvidia-smi >/dev/null 2>&1; then
-  echo "[worker] GPUs disponíveis:"
+  echo "[worker] GPUs:"
   nvidia-smi || true
-else
-  echo "[worker] nvidia-smi não encontrado (verifique NVIDIA Container Toolkit no host)."
 fi
 
-# garante diretório do volume
-mkdir -p /app/files/molecules
-ls -la /app/files/molecules || true
+# Espera RabbitMQ
+RABBITMQ_HOST="${RABBITMQ_HOST:-rabbitmq}"
+RABBITMQ_PORT="${RABBITMQ_PORT:-5672}"
+echo "[worker] waiting rabbitmq at ${RABBITMQ_HOST}:${RABBITMQ_PORT}..."
+until nc -z "$RABBITMQ_HOST" "$RABBITMQ_PORT"; do sleep 1; done
 
-# aqui você pode iniciar seu orquestrador, fila, etc.
-python /app/main.py
+# Parâmetros Celery
+CELERY_APP="${CELERY_APP:-djangoAPI}"
+CELERY_QUEUE="${CELERY_QUEUE:-default}"
+CELERY_CONCURRENCY="${CELERY_CONCURRENCY:-1}"
+CELERY_LOGLEVEL="${CELERY_LOGLEVEL:-info}"
+
+echo "[worker] starting celery worker"
+exec celery -A "${CELERY_APP}" worker \
+  -l "${CELERY_LOGLEVEL}" \
+  -Q "${CELERY_QUEUE}" \
+  -n "worker@%h" \
+  --concurrency="${CELERY_CONCURRENCY}"
