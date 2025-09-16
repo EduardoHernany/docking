@@ -1,4 +1,3 @@
-# users/serializers.py
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -9,7 +8,6 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # unicidade no nível de API
     username = serializers.CharField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())],
@@ -18,11 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())],
     )
-
-    # password write-only e opcional no update
     password = serializers.CharField(write_only=True, required=False, allow_blank=False)
 
-    # defaults explícitos na API (além dos defaults do model)
     role = serializers.ChoiceField(choices=RoleEnum.choices, default=RoleEnum.USER, required=False)
     deleted = serializers.BooleanField(default=False, required=False)
     is_active = serializers.BooleanField(default=True, required=False)
@@ -39,19 +34,37 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "is_staff", "is_superuser", "last_login", "date_joined"]
 
     def validate_email(self, value: str) -> str:
-        # normaliza para minúsculas para consistência com a constraint no banco
         return value.strip().lower()
 
     def create(self, validated_data):
-        # garante defaults caso o caller não envie
-        validated_data.setdefault("role", RoleEnum.USER)
-        validated_data.setdefault("deleted", False)
-        validated_data.setdefault("is_active", True)
+        """
+        Cadastro público:
+        - força role=USER, deleted=False e is_active=True quando o caller não for staff
+        - ignora tentativas de setar is_staff/is_superuser
+        """
+        request = self.context.get("request")
+        is_staff_requester = bool(getattr(getattr(request, "user", None), "is_staff", False))
 
-        password = validated_data.pop("password", None)
-        # normaliza username opcionalmente (caso queira)
+        # Nunca permita elevação via payload
+        validated_data.pop("is_staff", None)
+        validated_data.pop("is_superuser", None)
+
+        # Normaliza username
         if "username" in validated_data and isinstance(validated_data["username"], str):
             validated_data["username"] = validated_data["username"].strip()
+
+        # Defaults “fortes” para criação pública
+        if not is_staff_requester:
+            validated_data["role"] = RoleEnum.USER
+            validated_data["deleted"] = False
+            validated_data["is_active"] = True
+        else:
+            # mesmo para staff, garanta defaults se não enviados
+            validated_data.setdefault("role", RoleEnum.USER)
+            validated_data.setdefault("deleted", False)
+            validated_data.setdefault("is_active", True)
+
+        password = validated_data.pop("password", None)
 
         user = User(**validated_data)
         if password:
@@ -68,6 +81,10 @@ class UserSerializer(serializers.ModelSerializer):
         if "email" in validated_data:
             validated_data["email"] = validated_data["email"].strip().lower()
 
+        # não permitir elevação via update no serializer
+        validated_data.pop("is_staff", None)
+        validated_data.pop("is_superuser", None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
@@ -75,6 +92,7 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
 
 class AuthLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()

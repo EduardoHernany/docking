@@ -35,7 +35,16 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+CORS_ALLOWED_ORIGINS = [
+    "*",
+]
+# Se precisar mandar cookies (session/CSRF), ative:
+CORS_ALLOW_CREDENTIALS = True
+
+# Para evitar 403 de CSRF com SessionAuthentication:
+CSRF_TRUSTED_ORIGINS = [
+    "*",
+]
 
 AUTH_USER_MODEL = "users.User"
 
@@ -57,6 +66,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    "corsheaders",
     "django_celery_results",
     "rest_framework",
     "drf_spectacular",
@@ -67,6 +77,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
