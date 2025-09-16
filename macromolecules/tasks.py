@@ -183,7 +183,7 @@ def prepare_macromolecule(
     # 1) receptor -> pdbqt
     if not receptor_pdb.exists():
         raise FileNotFoundError(f"Receptor .pdb não está em {receptor_pdb}")
-    _run([PYTHONSH, PREPARE_RECEPTOR, "-r", receptor_pdb.name, "-o", f"{receptor_name}.pdbqt", "-A", "hydrogens"],
+    _run([PYTHONSH, PREPARE_RECEPTOR, "-r", receptor_pdb.name, "-o", f"{receptor_name}.pdbqt"],
          wd, f"{receptor_name}.prepare_receptor4")
     if not receptor_pdbqt.exists():
         raise RuntimeError("prepare_receptor4 não gerou o .pdbqt do receptor")

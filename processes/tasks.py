@@ -273,7 +273,7 @@ def run_plasmodocking_process(process_id: str) -> dict:
     for m in macs:
         rec_block: Dict = {
             "macromolecule_id": str(m.id),
-            "receptor_rec": m.rec,
+            "receptor_rec": m.rec.upper(),
             "receptor_nome": m.nome,
             "grid_size": m.gridsize,
             "grid_center": m.gridcenter,
@@ -281,7 +281,12 @@ def run_plasmodocking_process(process_id: str) -> dict:
             "ligantes": [],
             "status": "processing",  # novo campo de status
         }
-
+        if m.type.redocking:
+            rec_block.update({
+                "rmsd_redocking": m.rmsd_redocking,
+                "ligante_original": m.ligante_original,
+                "energia_original": m.energia_original,
+            })
         # Resolve path do fld (*.maps.fld) por receptor
         try:
             fld_path = Path(m.pathFilefld)
