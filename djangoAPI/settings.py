@@ -35,16 +35,20 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-CORS_ALLOWED_ORIGINS = [
-    "*",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "*",
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = False
+
 # Se precisar mandar cookies (session/CSRF), ative:
 CORS_ALLOW_CREDENTIALS = True
 
 # Para evitar 403 de CSRF com SessionAuthentication:
-CSRF_TRUSTED_ORIGINS = [
-    "*",
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     "*",
+# ]
 
 AUTH_USER_MODEL = "users.User"
 
