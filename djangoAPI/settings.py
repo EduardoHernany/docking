@@ -38,7 +38,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 # CORS_ALLOWED_ORIGINS = [
 #     "*",
 # ]
-
+ALLOWED_HOSTS=["*"]  # ajuste em produção
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = False
 
