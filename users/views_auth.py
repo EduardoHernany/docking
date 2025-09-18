@@ -24,16 +24,17 @@ def _bool_attr(obj, name, default=True):
 
 @extend_schema(
     tags=["Auth"],
+    auth=[],  # ← remove auth do endpoint no schema (drf-spectacular)
     request=AuthLoginSerializer,
     responses={200: AuthTokenResponseSerializer, 401: None},
 )
 class AuthLoginPasswordView(APIView):
     """
     POST /api/auth/login/password
-    body: { "email": "...", "password": "..." }
-    resp: { "access_token": "...", "token_type": "Bearer" }
+    Sempre ignora Authorization header (mesmo se inválido).
     """
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []  # ← desativa autenticação aqui
 
     def post(self, request):
         serializer = AuthLoginSerializer(data=request.data)
@@ -41,22 +42,18 @@ class AuthLoginPasswordView(APIView):
         email = serializer.validated_data["email"].strip()
         password = serializer.validated_data["password"]
 
-        # autenticação por e-mail (case-insensitive)
         user = User.objects.filter(email__iexact=email).first()
         if not user or not check_password(password, user.password):
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # bloqueios básicos
         if not user.is_active or not _bool_attr(user, "active", True) or _bool_attr(user, "deleted", False):
             return Response({"detail": "User is inactive or deleted"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Gera somente access_token (sem refresh, conforme seu contrato)
         access = RefreshToken.for_user(user).access_token
         return Response(
             {"access_token": str(access), "token_type": "Bearer"},
             status=status.HTTP_200_OK,
         )
-
 
 @extend_schema(
     tags=["Auth"],
