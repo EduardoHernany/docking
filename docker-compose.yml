@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:15
+    # container_name: docking_db   # REMOVA
     env_file:
       - .env
     environment:
@@ -22,6 +23,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
+    # container_name: docking_pgadmin
     env_file:
       - .env
     ports:
@@ -37,6 +39,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
+    # container_name: docking_rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
@@ -49,6 +52,7 @@ services:
 
   web:
     build: .
+    # container_name: docking_web
     env_file:
       - .env
     environment:
@@ -74,7 +78,7 @@ services:
     build:
       context: .
       dockerfile: worker/Dockerfile
-    profiles: ["gpu"]   # só sobe se usar --profile gpu
+    profiles: ["gpu"]   # <- só habilita quando usar --profile gpu
     env_file:
       - .env
     environment:
@@ -88,13 +92,8 @@ services:
       - .:/app
       - molecules_data:/app/files/molecules
       - processes_data:/app/files/processes
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all        # ou 1 se quiser só 1 GPU
-              capabilities: ["gpu"]
+    # GPU para Compose (sem Swarm) — precisa do NVIDIA Container Toolkit instalado
+    gpus: all
     depends_on:
       rabbitmq:
         condition: service_started
