@@ -93,8 +93,11 @@ services:
       - molecules_data:/app/files/molecules
       - processes_data:/app/files/processes
     # GPU para Compose (sem Swarm) — precisa do NVIDIA Container Toolkit instalado
-    gpus:
-      - all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
     depends_on:
       rabbitmq:
         condition: service_started
