@@ -92,8 +92,13 @@ services:
       - .:/app
       - molecules_data:/app/files/molecules
       - processes_data:/app/files/processes
-    gpus:
-      - device: "all"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all        # ou 1 se quiser só 1 GPU
+              capabilities: [gpu]
     depends_on:
       rabbitmq:
         condition: service_started
