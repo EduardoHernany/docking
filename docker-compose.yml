@@ -78,7 +78,7 @@ services:
     build:
       context: .
       dockerfile: worker/Dockerfile
-    profiles: ["gpu"]   # <- só habilita quando usar --profile gpu
+    profiles: ["gpu"]
     env_file:
       - .env
     environment:
@@ -92,9 +92,8 @@ services:
       - .:/app
       - molecules_data:/app/files/molecules
       - processes_data:/app/files/processes
-    # GPU para Compose (sem Swarm) — precisa do NVIDIA Container Toolkit instalado
     gpus:
-      - all
+      - device: "all"
     depends_on:
       rabbitmq:
         condition: service_started
