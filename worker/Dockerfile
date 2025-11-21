@@ -40,8 +40,13 @@ ENV PATH="/home/autodockgpu/mgltools_x86_64Linux2_1.5.7/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/home/autodockgpu/mgltools_x86_64Linux2_1.5.7/lib:${LD_LIBRARY_PATH}"
 
 # -------- AutoDock Suite --------
-RUN wget -q https://autodock.scripps.edu/wp-content/uploads/sites/56/2021/10/autodocksuite-4.2.6-x86_64Linux2.tar \
- && tar -xf autodocksuite-4.2.6-x86_64Linux2.tar \
+# RUN wget -q https://autodock.scripps.edu/wp-content/uploads/sites/56/2021/10/autodocksuite-4.2.6-x86_64Linux2.tar \
+#  && tar -xf autodocksuite-4.2.6-x86_64Linux2.tar \
+#  && rm -f /home/autodockgpu/autodocksuite-4.2.6-x86_64Linux2.tar
+# ENV PATH="/home/autodockgpu/autodocksuite-4.2.6:${PATH}"
+
+COPY worker/autodocksuite-4.2.6-x86_64Linux2.tar /home/autodockgpu/autodocksuite-4.2.6-x86_64Linux2.tar
+RUN tar -xf autodocksuite-4.2.6-x86_64Linux2.tar \
  && rm -f /home/autodockgpu/autodocksuite-4.2.6-x86_64Linux2.tar
 ENV PATH="/home/autodockgpu/autodocksuite-4.2.6:${PATH}"
 

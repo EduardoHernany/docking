@@ -1,23 +1,29 @@
 services:
   db:
     image: postgres:15
-    container_name: docking_db
+    # container_name: docking_db   # REMOVA
     env_file:
       - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5433:5432"  # host:container (apenas para acesso pelo host)
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - appnet
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: docking_pgadmin
+    # container_name: docking_pgadmin
     env_file:
       - .env
     ports:
@@ -28,28 +34,35 @@ services:
       db:
         condition: service_healthy
     restart: always
+    networks:
+      - appnet
 
   rabbitmq:
-      image: rabbitmq:3-management
-      container_name: docking_rabbitmq
-      environment:
-        - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-        - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-      ports:
-        - "5672:5672"
-        - "15672:15672"   
-      restart: always
+    image: rabbitmq:3-management
+    # container_name: docking_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    networks:
+      - appnet
 
   web:
     build: .
-    container_name: docking_web
+    # container_name: docking_web
     env_file:
       - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
     command: bash /app/entrypoint.sh
     volumes:
       - .:/app
       - molecules_data:/app/files/molecules
-      - processes_data:/app/files/processes 
+      - processes_data:/app/files/processes
     ports:
       - "8000:8000"
     depends_on:
@@ -58,36 +71,42 @@ services:
       rabbitmq:
         condition: service_started
     restart: always
+    networks:
+      - appnet
 
   celery_worker:
     build:
       context: .
       dockerfile: worker/Dockerfile
-    container_name: docking_celery_worker
+    profiles: ["gpu"]   # <- só habilita quando usar --profile gpu
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=djangoAPI.settings
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      DJANGO_SETTINGS_MODULE: djangoAPI.settings
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
     command: bash worker/entrypoint.sh
     volumes:
       - .:/app
       - molecules_data:/app/files/molecules
-      - processes_data:/app/files/processes 
-    # gpus: all
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
+      - processes_data:/app/files/processes
+    # GPU para Compose (sem Swarm) — precisa do NVIDIA Container Toolkit instalado
+    gpus: all
     depends_on:
       rabbitmq:
         condition: service_started
     restart: always
+    networks:
+      - appnet
 
 volumes:
   postgres_data:
   pgadmin_data:
   molecules_data:
-  processes_data:     
+  processes_data:
+
+networks:
+  appnet:
+    driver: bridge
